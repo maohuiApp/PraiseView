@@ -8,7 +8,8 @@
 
     <com.moly.hooyee.praise.PraiseView
         android:id="@+id/pv_praise"
-        android:background="#b76060"
+        android:clickable="true"
+        android:focusable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 

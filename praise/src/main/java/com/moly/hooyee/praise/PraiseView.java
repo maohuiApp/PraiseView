@@ -1,9 +1,12 @@
 package com.moly.hooyee.praise;
 
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
@@ -12,6 +15,7 @@ import android.support.annotation.Nullable;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewPropertyAnimator;
 
 /**
  * Created by Hooyee on 2017/10/16.
@@ -21,6 +25,8 @@ import android.view.View;
 public class PraiseView extends View {
     private Drawable mDrawable;
     private Paint mPaint;
+    private float mRadius;
+    private PointF mCircleCenter = new PointF();
 
     public PraiseView(Context context) {
         this(context, null);
@@ -34,21 +40,25 @@ public class PraiseView extends View {
         super(context, attrs, defStyleAttr);
         Resources.Theme theme = getContext().getTheme();
         Drawable drawable = VectorDrawableCompat.create(getResources(), R.drawable.ic_praise, theme);
-        setDrawable(drawable);
+        initDrawable(drawable);
         initPaint();
+    }
+
+    private void initDrawable(Drawable drawable) {
+        mDrawable = drawable;
+        Rect drawableRect = new Rect(0, mDrawable.getIntrinsicHeight()/4, mDrawable.getIntrinsicWidth(), mDrawable.getIntrinsicHeight() + mDrawable.getIntrinsicHeight()/4);
+        mDrawable.setBounds(drawableRect);
+        requestLayout();
+
+        int width = drawableRect.right - drawableRect.left;
+        int height = drawableRect.bottom - drawableRect.top;
+        mRadius = width > height ? width/2f : height/2f;
     }
 
     private void initPaint() {
         mPaint = new Paint();
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setAntiAlias(true);
-    }
-
-    public void setDrawable(Drawable drawable) {
-        mDrawable = drawable;
-        Rect drawableRect = new Rect(0, mDrawable.getIntrinsicHeight()/4, mDrawable.getIntrinsicWidth(), mDrawable.getIntrinsicHeight() + mDrawable.getIntrinsicHeight()/4);
-        mDrawable.setBounds(drawableRect);
-        requestLayout();
     }
 
     @Override
@@ -88,6 +98,8 @@ public class PraiseView extends View {
         }
 
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+        mCircleCenter.x = getMeasuredWidth()/2f;
+        mCircleCenter.y = getMeasuredHeight()/2f;
     }
 
     @Override
@@ -98,13 +110,41 @@ public class PraiseView extends View {
     }
 
     private void drawEffect(Canvas canvas) {
-        int width = mDrawable.getBounds().right - mDrawable.getBounds().left;
-        int height = mDrawable.getBounds().bottom - mDrawable.getBounds().top;
-        float radius = width > height ? width/2f : height/2f;
-        canvas.drawCircle(width/2f, getHeight()/2f, radius, mPaint);
+        // 内圆
+        canvas.drawCircle(mCircleCenter.x, mCircleCenter.y, mRadius, mPaint);
 
-        canvas.drawCircle(width/2f, height/4f, height/4f, mPaint);
+        PointF p1 = new PointF(
+                mCircleCenter.x + (float)(mRadius * Math.cos(Math.toRadians(45))),
+                mCircleCenter.y + (float)(mRadius * Math.sin(Math.toRadians(45)))
+                );
+
+        PointF p2 = new PointF(
+                mCircleCenter.x + (float)(1.5f * mRadius * Math.cos(Math.toRadians(45))),
+                mCircleCenter.y + (float)(1.5f * mRadius * Math.sin(Math.toRadians(45)))
+        );
+
+//        canvas.drawLine(p1.x, p1.y, p2.x, p2.y, mPaint);
+//        canvas.drawLine(140, 90, 180, 90, mPaint);
+        canvas.drawLines(new float[] {
+                p1.x, p1.y,
+                p2.x, p2.y,
+        }, mPaint);
 
 //        mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
+    }
+
+    public void animation() {
+        ObjectAnimator animator = ObjectAnimator.ofFloat(this, "radius", getRadius(), getRadius() * 1.2f);
+        animator.setDuration(1000);
+        animator.start();
+    }
+
+    public float getRadius() {
+        return mRadius;
+    }
+
+    public void setRadius(float mRadius) {
+        this.mRadius = mRadius;
+        invalidate();
     }
 }
