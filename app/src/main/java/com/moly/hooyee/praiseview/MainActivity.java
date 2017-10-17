@@ -15,11 +15,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mPraiseView = (PraiseView) findViewById(R.id.pv_praise);
-        mPraiseView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mPraiseView.animation();
-            }
-        });
+//        mPraiseView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mPraiseView.animation();
+//            }
+//        });
     }
 }

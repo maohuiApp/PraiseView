@@ -1,21 +1,31 @@
 package com.moly.hooyee.praise;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.Nullable;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
+import android.view.ViewTreeObserver;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AnticipateInterpolator;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Hooyee on 2017/10/16.
@@ -27,6 +37,7 @@ public class PraiseView extends View {
     private Paint mPaint;
     private float mRadius;
     private PointF mCircleCenter = new PointF();
+    List<PointF> mPointList = new ArrayList<>();
 
     public PraiseView(Context context) {
         this(context, null);
@@ -42,6 +53,17 @@ public class PraiseView extends View {
         Drawable drawable = VectorDrawableCompat.create(getResources(), R.drawable.ic_praise, theme);
         initDrawable(drawable);
         initPaint();
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+            @Override
+            public void onGlobalLayout() {
+                initPointFs(1.3f);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                }
+            }
+        });
     }
 
     private void initDrawable(Drawable drawable) {
@@ -49,16 +71,14 @@ public class PraiseView extends View {
         Rect drawableRect = new Rect(0, mDrawable.getIntrinsicHeight()/4, mDrawable.getIntrinsicWidth(), mDrawable.getIntrinsicHeight() + mDrawable.getIntrinsicHeight()/4);
         mDrawable.setBounds(drawableRect);
         requestLayout();
-
-        int width = drawableRect.right - drawableRect.left;
-        int height = drawableRect.bottom - drawableRect.top;
-        mRadius = width > height ? width/2f : height/2f;
     }
 
     private void initPaint() {
         mPaint = new Paint();
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setAntiAlias(true);
+        mPaint.setColor(Color.parseColor("#ffFF8000"));
+        mPaint.setStrokeCap(Paint.Cap.ROUND);
     }
 
     @Override
@@ -99,44 +119,119 @@ public class PraiseView extends View {
 
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
         mCircleCenter.x = getMeasuredWidth()/2f;
-        mCircleCenter.y = getMeasuredHeight()/2f;
+        mCircleCenter.y = getMeasuredHeight()/2f + mDrawable.getBounds().top / 2;
+    }
+
+    private void initPointFs(float scale) {
+        mPointList.clear();
+        float radius = getInitRadius(mDrawable);
+        int base = -60;
+        int factor = -20;
+        for (int i = 0; i < 4; i++) {
+            int result = base + factor * i;
+            PointF p1 = new PointF(
+                    mCircleCenter.x + (float)(radius * Math.cos(Math.toRadians(result))),
+                    mCircleCenter.y + (float)(radius * Math.sin(Math.toRadians(result)))
+            );
+
+            PointF p2 = new PointF(
+                    mCircleCenter.x + (float)(scale * radius * Math.cos(Math.toRadians(result))),
+                    mCircleCenter.y + (float)(scale * radius * Math.sin(Math.toRadians(result)))
+            );
+
+            mPointList.add(p1);
+            mPointList.add(p2);
+        }
+    }
+
+    private int drawLines;
+
+    public int getDrawLines() {
+        return drawLines;
+    }
+
+    public void setDrawLines(int drawLines) {
+        this.drawLines = drawLines;
+        invalidate();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         mDrawable.draw(canvas);
+
         drawEffect(canvas);
     }
 
     private void drawEffect(Canvas canvas) {
-        // 内圆
-        canvas.drawCircle(mCircleCenter.x, mCircleCenter.y, mRadius, mPaint);
+        // 画圆
+        if (mRadius > 0)
+            canvas.drawCircle(mCircleCenter.x, mCircleCenter.y, mRadius, mPaint);
 
-        PointF p1 = new PointF(
-                mCircleCenter.x + (float)(mRadius * Math.cos(Math.toRadians(45))),
-                mCircleCenter.y + (float)(mRadius * Math.sin(Math.toRadians(45)))
-                );
+        if (drawLines == 1) {
+            // 划线
+            float flag = mPaint.getStrokeWidth();
+            mPaint.setStrokeWidth(15);
+            for (int i = 0; i < mPointList.size(); i += 2) {
+                canvas.drawLines(new float[]{
+                        mPointList.get(i).x, mPointList.get(i).y,
+                        mPointList.get(i + 1).x, mPointList.get(i + 1).y
+                }, mPaint);
+            }
+            mPaint.setStrokeWidth(flag);
+        }
+    }
 
-        PointF p2 = new PointF(
-                mCircleCenter.x + (float)(1.5f * mRadius * Math.cos(Math.toRadians(45))),
-                mCircleCenter.y + (float)(1.5f * mRadius * Math.sin(Math.toRadians(45)))
-        );
-
-//        canvas.drawLine(p1.x, p1.y, p2.x, p2.y, mPaint);
-//        canvas.drawLine(140, 90, 180, 90, mPaint);
-        canvas.drawLines(new float[] {
-                p1.x, p1.y,
-                p2.x, p2.y,
-        }, mPaint);
-
-//        mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                animate().scaleY(0.8f).scaleX(0.8f).start();
+                break;
+            case MotionEvent.ACTION_UP:
+                getHandler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        animate().cancel();
+                        setScaleX(1);
+                        setScaleY(1);
+                    }
+                }, 300);
+                animation();
+                break;
+        }
+        return super.onTouchEvent(event);
     }
 
     public void animation() {
-        ObjectAnimator animator = ObjectAnimator.ofFloat(this, "radius", getRadius(), getRadius() * 1.2f);
-        animator.setDuration(1000);
-        animator.start();
+        final float radius = getInitRadius(mDrawable);
+        ObjectAnimator animator = ObjectAnimator.ofFloat(this, "radius", radius, radius*1.3f, radius * 1.8f);
+        animator.setInterpolator(new AnticipateInterpolator());
+        animator.setDuration(500);
+
+        ObjectAnimator animator1 = ObjectAnimator.ofInt(this, "drawLines", 0, 1, 0);
+        animator1.setInterpolator(new AccelerateDecelerateInterpolator());
+        animator1.setDuration(1000);
+        animator1.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                mDrawable.setColorFilter(null);
+            }
+        });
+
+        mDrawable.setColorFilter(new PorterDuffColorFilter(Color.parseColor("#ffFF8000"), PorterDuff.Mode.SRC_IN));
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(animator, animator1);
+        set.start();
+//        animator.start();
+//        animator1.start();
+    }
+
+    float getInitRadius(Drawable drawable) {
+        int width = drawable.getBounds().right - drawable.getBounds().left;
+        int height = drawable.getBounds().bottom - drawable.getBounds().top;
+        return width > height ? width / 2 : height / 2;
     }
 
     public float getRadius() {
