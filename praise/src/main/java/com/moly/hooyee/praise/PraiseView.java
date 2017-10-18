@@ -6,6 +6,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -16,6 +17,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.Nullable;
+import android.support.annotation.Px;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -33,11 +35,19 @@ import java.util.List;
  */
 
 public class PraiseView extends View {
+    public static final byte CANCEL_PRAISE = 1;
+    public static final byte NONE = 0;
+    public static final byte TO_PRAISE = -1;
+
     private Drawable mDrawable;
     private Paint mPaint;
     private float mRadius;
     private PointF mCircleCenter = new PointF();
     List<PointF> mPointList = new ArrayList<>();
+
+    private byte mState;
+    /** 点赞后的画笔颜色 */
+    private int mColor;
 
     public PraiseView(Context context) {
         this(context, null);
@@ -50,8 +60,10 @@ public class PraiseView extends View {
     public PraiseView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         Resources.Theme theme = getContext().getTheme();
-        Drawable drawable = VectorDrawableCompat.create(getResources(), R.drawable.ic_praise, theme);
-        initDrawable(drawable);
+        mDrawable = VectorDrawableCompat.create(getResources(), R.drawable.ic_praise, theme);
+
+        initAttr(attrs);
+
         initPaint();
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -66,9 +78,19 @@ public class PraiseView extends View {
         });
     }
 
-    private void initDrawable(Drawable drawable) {
+    private void initAttr(AttributeSet attrs) {
+        TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.PraiseView);
+        mColor = typedArray.getColor(R.styleable.PraiseView_color_praise, Color.parseColor("#ff8000"));
+    }
+
+    // drawable的大小为view的0.6
+    private void initDrawable(Drawable drawable, int width, int height) {
+        mCircleCenter.x = width / 2f;
+        mCircleCenter.y = height / 2;
         mDrawable = drawable;
-        Rect drawableRect = new Rect(0, mDrawable.getIntrinsicHeight()/4, mDrawable.getIntrinsicWidth(), mDrawable.getIntrinsicHeight() + mDrawable.getIntrinsicHeight()/4);
+
+
+        Rect drawableRect = new Rect((width * 2 / 10) , (height * 2 / 10), (width * 8 / 10), (height * 8 / 10));
         mDrawable.setBounds(drawableRect);
         requestLayout();
     }
@@ -77,7 +99,7 @@ public class PraiseView extends View {
         mPaint = new Paint();
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setAntiAlias(true);
-        mPaint.setColor(Color.parseColor("#ffFF8000"));
+        mPaint.setColor(mColor);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
     }
 
@@ -109,7 +131,7 @@ public class PraiseView extends View {
                 break;
             // wrap_content
             case MeasureSpec.AT_MOST:
-                heightMeasureSpec = mDrawable.getIntrinsicHeight() + mDrawable.getIntrinsicHeight()/4;
+                heightMeasureSpec = mDrawable.getIntrinsicHeight() + mDrawable.getIntrinsicHeight() / 4;
                 break;
             // 具体值或者match_parent
             case MeasureSpec.EXACTLY:
@@ -118,10 +140,19 @@ public class PraiseView extends View {
         }
 
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
-        mCircleCenter.x = getMeasuredWidth()/2f;
-        mCircleCenter.y = getMeasuredHeight()/2f + mDrawable.getBounds().top / 2;
+        initDrawable(mDrawable, widthMeasureSpec, heightMeasureSpec);
+
     }
 
+    @Override
+    public void layout(@Px int l, @Px int t, @Px int r, @Px int b) {
+        super.layout(l, t, r, b);
+    }
+
+    /**
+     * 用于计算 线条的长度
+     * @param scale 外圆半径为内圆半径的scale倍数
+     */
     private void initPointFs(float scale) {
         mPointList.clear();
         float radius = getInitRadius(mDrawable);
@@ -130,13 +161,13 @@ public class PraiseView extends View {
         for (int i = 0; i < 4; i++) {
             int result = base + factor * i;
             PointF p1 = new PointF(
-                    mCircleCenter.x + (float)(radius * Math.cos(Math.toRadians(result))),
-                    mCircleCenter.y + (float)(radius * Math.sin(Math.toRadians(result)))
+                    mCircleCenter.x + (float) (radius * Math.cos(Math.toRadians(result))),
+                    mCircleCenter.y + (float) (radius * Math.sin(Math.toRadians(result)))
             );
 
             PointF p2 = new PointF(
-                    mCircleCenter.x + (float)(scale * radius * Math.cos(Math.toRadians(result))),
-                    mCircleCenter.y + (float)(scale * radius * Math.sin(Math.toRadians(result)))
+                    mCircleCenter.x + (float) (scale * radius * Math.cos(Math.toRadians(result))),
+                    mCircleCenter.y + (float) (scale * radius * Math.sin(Math.toRadians(result)))
             );
 
             mPointList.add(p1);
@@ -144,6 +175,7 @@ public class PraiseView extends View {
         }
     }
 
+    // 是否画线，1代表画，0代表不画
     private int drawLines;
 
     public int getDrawLines() {
@@ -171,7 +203,8 @@ public class PraiseView extends View {
         if (drawLines == 1) {
             // 划线
             float flag = mPaint.getStrokeWidth();
-            mPaint.setStrokeWidth(15);
+            float strokeWidth = Util.px2dip(getContext(), 15);
+            mPaint.setStrokeWidth(strokeWidth);
             for (int i = 0; i < mPointList.size(); i += 2) {
                 canvas.drawLines(new float[]{
                         mPointList.get(i).x, mPointList.get(i).y,
@@ -186,46 +219,77 @@ public class PraiseView extends View {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                switch (mState) {
+                    // 从mState之前的状态修改为用户操作的目标状态
+                    case NONE:
+                    case CANCEL_PRAISE:
+                        changeState(TO_PRAISE);
+                        break;
+                    case TO_PRAISE:
+                        changeState(CANCEL_PRAISE);
+                        break;
+                }
                 animate().scaleY(0.8f).scaleX(0.8f).start();
                 break;
             case MotionEvent.ACTION_UP:
-                getHandler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        animate().cancel();
-                        setScaleX(1);
-                        setScaleY(1);
-                    }
-                }, 300);
-                animation();
+                execCMD(mState);
                 break;
         }
         return super.onTouchEvent(event);
     }
 
+    private void execCMD(byte state) {
+        getHandler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                animate().cancel();
+                setScaleX(1);
+                setScaleY(1);
+            }
+        }, 300);
+        switch (state) {
+            case TO_PRAISE:
+                execPraise();
+                break;
+            case CANCEL_PRAISE:
+                execCancelPraise();
+                break;
+        }
+    }
+
+    private void execPraise() {
+        animation();
+    }
+
+    private void execCancelPraise() {
+        mDrawable.setColorFilter(null);
+        setDrawLines(0);
+    }
+
+    private void changeState(byte state) {
+        mState = state;
+    }
+
     public void animation() {
         final float radius = getInitRadius(mDrawable);
-        ObjectAnimator animator = ObjectAnimator.ofFloat(this, "radius", radius, radius*1.3f, radius * 1.8f);
+        ObjectAnimator animator = ObjectAnimator.ofFloat(this, "radius", radius, radius * 1.5f, radius * 3.0f);
         animator.setInterpolator(new AnticipateInterpolator());
         animator.setDuration(500);
 
-        ObjectAnimator animator1 = ObjectAnimator.ofInt(this, "drawLines", 0, 1, 0);
+        ObjectAnimator animator1 = ObjectAnimator.ofInt(this, "drawLines", 0, 1);
         animator1.setInterpolator(new AccelerateDecelerateInterpolator());
-        animator1.setDuration(1000);
+        animator1.setDuration(500);
         animator1.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                mDrawable.setColorFilter(null);
             }
         });
 
-        mDrawable.setColorFilter(new PorterDuffColorFilter(Color.parseColor("#ffFF8000"), PorterDuff.Mode.SRC_IN));
+        mDrawable.setColorFilter(new PorterDuffColorFilter(mColor, PorterDuff.Mode.SRC_IN));
         AnimatorSet set = new AnimatorSet();
         set.playTogether(animator, animator1);
         set.start();
-//        animator.start();
-//        animator1.start();
     }
 
     float getInitRadius(Drawable drawable) {
