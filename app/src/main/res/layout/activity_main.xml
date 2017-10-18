@@ -11,11 +11,32 @@
         android:id="@+id/pv_praise"
         android:clickable="true"
         android:focusable="true"
-        android:layout_width="200dp"
-        android:layout_height="200dp" />
+        android:layout_width="100dp"
+        android:layout_height="100dp" />
 
     <com.moly.hooyee.praise.RecordView
+        android:id="@+id/rv_record"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_centerHorizontal="true"
         android:layout_below="@id/pv_praise"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:layout_below="@id/rv_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/bt_add"
+            android:text="+1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/bt_reduce"
+            android:text="-1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 </RelativeLayout>

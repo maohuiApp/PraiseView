@@ -130,7 +130,7 @@ public class PraiseView extends View {
                 break;
             // wrap_content
             case MeasureSpec.AT_MOST:
-                heightMeasureSpec = mDrawable.getIntrinsicHeight() + mDrawable.getIntrinsicHeight() / 4;
+                heightMeasureSpec = mDrawable.getIntrinsicHeight();
                 break;
             // 具体值或者match_parent
             case MeasureSpec.EXACTLY:
@@ -197,7 +197,7 @@ public class PraiseView extends View {
         if (drawLines == 1) {
             // 划线
             float flag = mPaint.getStrokeWidth();
-            float strokeWidth = Util.dip2px(getContext(), 10);
+            float strokeWidth = Util.dip2px(getContext(), Util.px2dip(getContext(), mDrawable.getBounds().width()/8));
             mPaint.setStrokeWidth(strokeWidth);
             for (int i = 0; i < mPointList.size(); i += 2) {
                 canvas.drawLines(new float[]{
