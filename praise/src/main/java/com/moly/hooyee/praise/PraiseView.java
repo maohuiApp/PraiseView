@@ -105,7 +105,6 @@ public class PraiseView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         int widthSpecMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -142,11 +141,6 @@ public class PraiseView extends View {
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
         initDrawable(mDrawable, widthMeasureSpec, heightMeasureSpec);
 
-    }
-
-    @Override
-    public void layout(@Px int l, @Px int t, @Px int r, @Px int b) {
-        super.layout(l, t, r, b);
     }
 
     /**
@@ -203,7 +197,7 @@ public class PraiseView extends View {
         if (drawLines == 1) {
             // 划线
             float flag = mPaint.getStrokeWidth();
-            float strokeWidth = Util.px2dip(getContext(), 15);
+            float strokeWidth = Util.dip2px(getContext(), 10);
             mPaint.setStrokeWidth(strokeWidth);
             for (int i = 0; i < mPointList.size(); i += 2) {
                 canvas.drawLines(new float[]{

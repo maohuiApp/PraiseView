@@ -13,4 +13,9 @@
         android:focusable="true"
         android:layout_width="200dp"
         android:layout_height="200dp" />
+
+    <com.moly.hooyee.praise.RecordView
+        android:layout_below="@id/pv_praise"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 </RelativeLayout>
