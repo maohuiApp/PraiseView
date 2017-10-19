@@ -1,5 +1,6 @@
 package com.moly.hooyee.praise;
 
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -26,10 +27,14 @@ public class RecordView extends View {
 
     private int mTextHeight;
     private int mCurrentNum;
-    private String mCurrentString = "8";
-    private String mNextString = "9";
-    private String mLastString = "7";
+
+    private String mCurrentString = "0";
+    private String mNextString = "1";
+    private String mLastString = "0";
     private Paint mPaint;
+
+    private float pointY;
+    private int mPaintAlpha;
 
     public RecordView(Context context) {
         this(context, null);
@@ -102,22 +107,50 @@ public class RecordView extends View {
     }
 
     public void addOne() {
+        mCurrentString = String.valueOf(mCurrentNum);
         mCurrentNum++;
+        mNextString = String.valueOf(mCurrentNum);
         mStatus = ADD;
 
+        if (mCurrentNum%10 == 0) {
+            requestLayout();
+        }
+
         ObjectAnimator animator = ObjectAnimator.ofFloat(this, "pointY", 2 * mTextHeight, mTextHeight);
-        animator.start();
+        ObjectAnimator alphaAnim = ObjectAnimator.ofInt(this, "paintAlpha", 255 , 0);
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(alphaAnim, animator);
+        set.start();
     }
 
     public void reduceOne() {
+        mCurrentString = String.valueOf(mCurrentNum);
         mCurrentNum--;
+        mLastString = String.valueOf(mCurrentNum);
         mStatus = REDUCE;
 
         ObjectAnimator animator = ObjectAnimator.ofFloat(this, "pointY", mTextHeight, 2 * mTextHeight);
-        animator.start();
+        ObjectAnimator alphaAnim = ObjectAnimator.ofInt(this, "paintAlpha", 255 , 0);
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(alphaAnim, animator);
+        set.start();
     }
 
-    private float pointY;
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if (mStatus == NONE) {
+            canvas.drawText(mCurrentString, 0, pointY, mPaint);
+        } else if (mStatus == ADD) {
+            canvas.drawText(mCurrentString, 0, pointY, mPaint);
+            mPaint.setAlpha(255 - mPaintAlpha);
+            canvas.drawText(mNextString, 0, mTextHeight + pointY, mPaint);
+        } else if (mStatus == REDUCE) {
+            canvas.drawText(mCurrentString, 0, mTextHeight + pointY, mPaint);
+            mPaint.setAlpha(255 - mPaintAlpha);
+            canvas.drawText(mLastString, 0, pointY, mPaint);
+        }
+    }
 
     public float getPointY() {
         return pointY;
@@ -128,17 +161,14 @@ public class RecordView extends View {
         invalidate();
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        if (mStatus == NONE) {
-            canvas.drawText(mCurrentString, 0, pointY, mPaint);
-        } else if (mStatus == ADD) {
-            canvas.drawText(mCurrentString, 0, pointY, mPaint);
-            canvas.drawText(mNextString, 0, mTextHeight + pointY, mPaint);
-        } else if (mStatus == REDUCE) {
-            canvas.drawText(mCurrentString, 0, mTextHeight + pointY, mPaint);
-            canvas.drawText(mLastString, 0, pointY, mPaint);
-        }
+
+    public int getPaintAlpha() {
+        return mPaintAlpha;
+    }
+
+    public void setPaintAlpha(int mPaintAlpha) {
+        this.mPaintAlpha = mPaintAlpha;
+        mPaint.setAlpha(mPaintAlpha);
+        invalidate();
     }
 }
