@@ -25,7 +25,7 @@ public class RecordView extends View {
 
     private byte mStatus = NONE;
 
-    private int mTextHeight;
+    private float mTextHeight;
     private int mCurrentNum;
 
     private String mCurrentString = "0";
@@ -63,8 +63,8 @@ public class RecordView extends View {
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setColor(Color.parseColor("#ff8000"));
-        mPaint.setTextSize(Util.dip2px(getContext(), 24));
+        mPaint.setColor(Color.parseColor("#ff9c9999"));
+        mPaint.setTextSize(Util.dip2px(getContext(), 18));
     }
 
     @Override
@@ -93,16 +93,20 @@ public class RecordView extends View {
                 heightMeasureSpec = getSuggestedMinimumWidth();
                 break;
             case MeasureSpec.AT_MOST:
-                Rect rect = new Rect();
-                mPaint.getTextBounds("0", 0, 1, rect);
-                mTextHeight = (int) (rect.height() + mPaint.getFontSpacing() / 2);
-                heightMeasureSpec = (mTextHeight * 3);
+                mTextHeight = mPaint.getFontSpacing();
+                heightMeasureSpec = (int) (mTextHeight * 3);
                 break;
             case MeasureSpec.EXACTLY:
+                mPaint.setTextSize(heightSpecSize / 4);
+                mTextHeight = (int) mPaint.getFontSpacing();
                 heightMeasureSpec = heightSpecSize;
                 break;
         }
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    public float getShowedTopY() {
+        return mTextHeight;
     }
 
     public void addOne() {
@@ -118,7 +122,7 @@ public class RecordView extends View {
         }
 
         ObjectAnimator animator = ObjectAnimator.ofFloat(this, "pointY", 2 * mTextHeight, mTextHeight);
-        ObjectAnimator alphaAnim = ObjectAnimator.ofInt(this, "paintAlpha", 255 , 0);
+        ObjectAnimator alphaAnim = ObjectAnimator.ofInt(this, "paintAlpha", 255, 0);
         AnimatorSet set = new AnimatorSet();
         set.playTogether(alphaAnim, animator);
         set.start();
@@ -126,7 +130,9 @@ public class RecordView extends View {
 
     public void reduceOne() {
         mCurrentString = String.valueOf(mCurrentNum);
-        mCurrentNum--;
+        if (mCurrentNum > 0) {
+            mCurrentNum--;
+        }
         if (mCurrentString.length() < mLastString.length()) {
             requestLayout();
         }
@@ -140,7 +146,7 @@ public class RecordView extends View {
         }
 
         ObjectAnimator animator = ObjectAnimator.ofFloat(this, "pointY", mTextHeight, 2 * mTextHeight);
-        ObjectAnimator alphaAnim = ObjectAnimator.ofInt(this, "paintAlpha", 255 , 0);
+        ObjectAnimator alphaAnim = ObjectAnimator.ofInt(this, "paintAlpha", 255, 0);
         AnimatorSet set = new AnimatorSet();
         set.playTogether(alphaAnim, animator);
         set.start();
@@ -191,17 +197,6 @@ public class RecordView extends View {
                 }
             }
         }
-//        if (mStatus == NONE) {
-//            canvas.drawText(mCurrentString, 0, pointY, mPaint);
-//        } else if (mStatus == ADD) {
-//            canvas.drawText(mCurrentString, 0, pointY, mPaint);
-//            mPaint.setAlpha(255 - mPaintAlpha);
-//            canvas.drawText(mNextString, 0, mTextHeight + pointY, mPaint);
-//        } else if (mStatus == REDUCE) {
-//            canvas.drawText(mCurrentString, 0, mTextHeight + pointY, mPaint);
-//            mPaint.setAlpha(255 - mPaintAlpha);
-//            canvas.drawText(mLastString, 0, pointY, mPaint);
-//        }
     }
 
     public float getPointY() {
@@ -222,13 +217,4 @@ public class RecordView extends View {
         mPaint.setAlpha(mPaintAlpha);
         invalidate();
     }
-
-//    private class Record {
-//        String value;
-//        boolean needUpdate;
-//
-//        public Record(String value) {
-//            this.value = value;
-//        }
-//    }
 }

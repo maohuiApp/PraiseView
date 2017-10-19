@@ -16,29 +16,29 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mPraiseView = (PraiseView) findViewById(R.id.pv_praise);
+//        mPraiseView = (PraiseView) findViewById(R.id.pv_praise);
+//
+//        mRecordView = (RecordView) findViewById(R.id.rv_record);
+//        mRecordView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mRecordView.addOne();
+//            }
+//        });
 
-        mRecordView = (RecordView) findViewById(R.id.rv_record);
-        mRecordView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mRecordView.addOne();
-            }
-        });
-
-        findViewById(R.id.bt_add).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mRecordView.addOne();
-            }
-        });
-
-        findViewById(R.id.bt_reduce).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mRecordView.reduceOne();
-            }
-        });
+//        findViewById(R.id.bt_add).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mRecordView.addOne();
+//            }
+//        });
+//
+//        findViewById(R.id.bt_reduce).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mRecordView.reduceOne();
+//            }
+//        });
 //        mPraiseView.setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View v) {

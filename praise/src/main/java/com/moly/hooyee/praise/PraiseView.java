@@ -65,16 +65,7 @@ public class PraiseView extends View {
 
         initPaint();
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
 
-            @Override
-            public void onGlobalLayout() {
-                initPointFs(1.3f);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                }
-            }
-        });
     }
 
     private void initAttr(AttributeSet attrs) {
@@ -139,7 +130,7 @@ public class PraiseView extends View {
 
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
         initDrawable(mDrawable, widthMeasureSpec, heightMeasureSpec);
-
+        initPointFs(1.3f);
     }
 
     /**
@@ -226,6 +217,9 @@ public class PraiseView extends View {
                 break;
             case MotionEvent.ACTION_UP:
                 execCMD(mState);
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                // 事件被拦截
                 break;
         }
         return super.onTouchEvent(event);
