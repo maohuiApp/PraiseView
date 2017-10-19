@@ -17,7 +17,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.Nullable;
-import android.support.annotation.Px;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;

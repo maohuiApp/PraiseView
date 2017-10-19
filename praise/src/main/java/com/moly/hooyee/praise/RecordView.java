@@ -80,8 +80,7 @@ public class RecordView extends View {
                 widthMeasureSpec = getSuggestedMinimumWidth();
                 break;
             case MeasureSpec.AT_MOST:
-//                Rect rect = new Rect();
-                int width = (int) mPaint.measureText(mCurrentString, 0, mCurrentString.length());
+                int width = (int) mPaint.measureText("0", 0, 1) * mCurrentString.length();
                 widthMeasureSpec = width;
                 break;
             case MeasureSpec.EXACTLY:
@@ -95,7 +94,7 @@ public class RecordView extends View {
                 break;
             case MeasureSpec.AT_MOST:
                 Rect rect = new Rect();
-                mPaint.getTextBounds(mCurrentString, 0, mCurrentString.length(), rect);
+                mPaint.getTextBounds("0", 0, 1, rect);
                 mTextHeight = (int) (rect.height() + mPaint.getFontSpacing() / 2);
                 heightMeasureSpec = (mTextHeight * 3);
                 break;
@@ -112,7 +111,9 @@ public class RecordView extends View {
         mNextString = String.valueOf(mCurrentNum);
         mStatus = ADD;
 
-        if (mCurrentNum%10 == 0) {
+        // 数字位数进1
+        if (mCurrentString.length() < mNextString.length()) {
+            mCurrentString = " " + mCurrentString;
             requestLayout();
         }
 
@@ -126,8 +127,17 @@ public class RecordView extends View {
     public void reduceOne() {
         mCurrentString = String.valueOf(mCurrentNum);
         mCurrentNum--;
+        if (mCurrentString.length() < mLastString.length()) {
+            requestLayout();
+        }
         mLastString = String.valueOf(mCurrentNum);
         mStatus = REDUCE;
+
+        // 加入占位符
+        if (mCurrentString.length() > mLastString.length()) {
+            mLastString = " " + mLastString;
+            requestLayout();
+        }
 
         ObjectAnimator animator = ObjectAnimator.ofFloat(this, "pointY", mTextHeight, 2 * mTextHeight);
         ObjectAnimator alphaAnim = ObjectAnimator.ofInt(this, "paintAlpha", 255 , 0);
@@ -142,14 +152,56 @@ public class RecordView extends View {
         if (mStatus == NONE) {
             canvas.drawText(mCurrentString, 0, pointY, mPaint);
         } else if (mStatus == ADD) {
-            canvas.drawText(mCurrentString, 0, pointY, mPaint);
-            mPaint.setAlpha(255 - mPaintAlpha);
-            canvas.drawText(mNextString, 0, mTextHeight + pointY, mPaint);
+            for (int i = mNextString.length() - 1; i >= 0; i--) {
+                String next = String.valueOf(mNextString.charAt(i));
+                String current = String.valueOf(mCurrentString.charAt(i));
+
+                // i位置需要改变
+                if (!next.equals(current)) {
+                    mPaint.setAlpha(mPaintAlpha);
+                    canvas.drawText(current, mPaint.measureText("0", 0, 1) * i, pointY, mPaint);
+
+                    // mPaintAlpha : 255  -  0 递减
+                    mPaint.setAlpha(255 - mPaintAlpha);
+                    canvas.drawText(next, mPaint.measureText("0", 0, 1) * i, mTextHeight + pointY, mPaint);
+                    // i位置不需要改变
+                } else {
+                    mPaint.setAlpha(255);
+                    canvas.drawText(current, mPaint.measureText("0", 0, 1) * i, mTextHeight * 2, mPaint);
+                }
+            }
         } else if (mStatus == REDUCE) {
-            canvas.drawText(mCurrentString, 0, mTextHeight + pointY, mPaint);
-            mPaint.setAlpha(255 - mPaintAlpha);
-            canvas.drawText(mLastString, 0, pointY, mPaint);
+            // pointY是累加的，因此有个往下滑动效果
+            for (int i = mCurrentString.length() - 1; i >= 0; i--) {
+                String last = String.valueOf(mLastString.charAt(i));
+                String current = String.valueOf(mCurrentString.charAt(i));
+
+                // i位置需要改变
+                if (!last.equals(current)) {
+                    mPaint.setAlpha(mPaintAlpha);
+                    canvas.drawText(current, mPaint.measureText("0", 0, 1) * i, mTextHeight + pointY, mPaint);
+
+                    // mPaintAlpha : 255  -  0 递减
+                    mPaint.setAlpha(255 - mPaintAlpha);
+                    canvas.drawText(last, mPaint.measureText("0", 0, 1) * i, pointY, mPaint);
+                    // i位置不需要改变
+                } else {
+                    mPaint.setAlpha(255);
+                    canvas.drawText(current, mPaint.measureText("0", 0, 1) * i, mTextHeight * 2, mPaint);
+                }
+            }
         }
+//        if (mStatus == NONE) {
+//            canvas.drawText(mCurrentString, 0, pointY, mPaint);
+//        } else if (mStatus == ADD) {
+//            canvas.drawText(mCurrentString, 0, pointY, mPaint);
+//            mPaint.setAlpha(255 - mPaintAlpha);
+//            canvas.drawText(mNextString, 0, mTextHeight + pointY, mPaint);
+//        } else if (mStatus == REDUCE) {
+//            canvas.drawText(mCurrentString, 0, mTextHeight + pointY, mPaint);
+//            mPaint.setAlpha(255 - mPaintAlpha);
+//            canvas.drawText(mLastString, 0, pointY, mPaint);
+//        }
     }
 
     public float getPointY() {
@@ -161,7 +213,6 @@ public class RecordView extends View {
         invalidate();
     }
 
-
     public int getPaintAlpha() {
         return mPaintAlpha;
     }
@@ -171,4 +222,13 @@ public class RecordView extends View {
         mPaint.setAlpha(mPaintAlpha);
         invalidate();
     }
+
+//    private class Record {
+//        String value;
+//        boolean needUpdate;
+//
+//        public Record(String value) {
+//            this.value = value;
+//        }
+//    }
 }
