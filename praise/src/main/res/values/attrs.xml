@@ -3,4 +3,7 @@
     <declare-styleable name="PraiseView">
         <attr name="color_praise" format="color" />
     </declare-styleable>
+    <declare-styleable name="PraiseRecordView">
+        <attr name="color_praise_view" format="color" />
+    </declare-styleable>
 </resources>

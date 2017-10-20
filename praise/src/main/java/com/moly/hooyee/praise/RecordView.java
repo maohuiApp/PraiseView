@@ -217,4 +217,12 @@ public class RecordView extends View {
         mPaint.setAlpha(mPaintAlpha);
         invalidate();
     }
+
+    public void setCurrentNum(int mCurrentNum) {
+        this.mCurrentNum = mCurrentNum;
+        mCurrentString = String.valueOf(mCurrentNum);
+        mLastString = String.valueOf(mCurrentNum - 1);
+        mNextString = String.valueOf(mCurrentNum + 1);
+        invalidate();
+    }
 }

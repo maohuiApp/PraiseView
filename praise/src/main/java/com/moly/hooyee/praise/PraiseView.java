@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -15,15 +16,15 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.support.annotation.Nullable;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AnticipateInterpolator;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +66,7 @@ public class PraiseView extends View {
 
         initPaint();
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
+        setClickable(true);
     }
 
     private void initAttr(AttributeSet attrs) {
@@ -79,8 +80,14 @@ public class PraiseView extends View {
         mCircleCenter.y = height / 2;
         mDrawable = drawable;
 
+        // drawable的边长为view的0.6
+        float diameter = (float) ((width > height ? height : width) * 0.6);
 
-        Rect drawableRect = new Rect((width * 2 / 10) , (height * 2 / 10), (width * 8 / 10), (height * 8 / 10));
+        int left = (int) ((width - diameter)/2);
+        int top = (int)(height - diameter)/2;
+        int right = (int) (left + diameter);
+        int bottom = (int) (top + diameter);
+        Rect drawableRect = new Rect(left, top, right, bottom);
         mDrawable.setBounds(drawableRect);
         requestLayout();
     }
@@ -91,6 +98,11 @@ public class PraiseView extends View {
         mPaint.setAntiAlias(true);
         mPaint.setColor(mColor);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
+    }
+
+    public void setPaintColor(int mColor) {
+        this.mColor = mColor;
+        mPaint.setColor(mColor);
     }
 
     @Override
@@ -183,7 +195,6 @@ public class PraiseView extends View {
         // 画圆
         if (mRadius > 0)
             canvas.drawCircle(mCircleCenter.x, mCircleCenter.y, mRadius, mPaint);
-
         if (drawLines == 1) {
             // 划线
             float flag = mPaint.getStrokeWidth();
@@ -199,10 +210,24 @@ public class PraiseView extends View {
         }
     }
 
+    float move;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                move = event.getY();
+                animate().scaleY(0.8f).scaleX(0.8f).start();
+                break;
+            case MotionEvent.ACTION_UP:
+                getHandler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        animate().cancel();
+                        setScaleX(1);
+                        setScaleY(1);
+                    }
+                }, 300);
                 switch (mState) {
                     // 从mState之前的状态修改为用户操作的目标状态
                     case NONE:
@@ -213,27 +238,22 @@ public class PraiseView extends View {
                         changeState(CANCEL_PRAISE);
                         break;
                 }
-                animate().scaleY(0.8f).scaleX(0.8f).start();
-                break;
-            case MotionEvent.ACTION_UP:
-                execCMD(mState);
                 break;
             case MotionEvent.ACTION_CANCEL:
-                // 事件被拦截
+                getHandler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        animate().cancel();
+                        setScaleX(1);
+                        setScaleY(1);
+                    }
+                }, 300);
                 break;
         }
         return super.onTouchEvent(event);
     }
 
     private void execCMD(byte state) {
-        getHandler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                animate().cancel();
-                setScaleX(1);
-                setScaleY(1);
-            }
-        }, 300);
         switch (state) {
             case TO_PRAISE:
                 execPraise();
@@ -255,6 +275,7 @@ public class PraiseView extends View {
 
     private void changeState(byte state) {
         mState = state;
+        execCMD(mState);
     }
 
     public void animation() {
@@ -266,10 +287,12 @@ public class PraiseView extends View {
         ObjectAnimator animator1 = ObjectAnimator.ofInt(this, "drawLines", 0, 1);
         animator1.setInterpolator(new AccelerateDecelerateInterpolator());
         animator1.setDuration(500);
-        animator1.addListener(new AnimatorListenerAdapter() {
+        animator1.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
+            public void onAnimationUpdate(ValueAnimator animation) {
+                if (mState == CANCEL_PRAISE) {
+                    animation.cancel();
+                }
             }
         });
 
@@ -292,5 +315,9 @@ public class PraiseView extends View {
     public void setRadius(float mRadius) {
         this.mRadius = mRadius;
         invalidate();
+    }
+
+    public byte getState() {
+        return mState;
     }
 }
