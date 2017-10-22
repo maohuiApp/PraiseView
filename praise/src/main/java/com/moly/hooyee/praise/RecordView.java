@@ -48,15 +48,6 @@ public class RecordView extends View {
         super(context, attrs, defStyleAttr);
 
         initPaint();
-
-        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
-            @Override
-            public void onGlobalLayout() {
-                pointY = 2 * mTextHeight;
-                getViewTreeObserver().removeOnGlobalLayoutListener(this);
-            }
-        });
     }
 
     private void initPaint() {
@@ -102,6 +93,7 @@ public class RecordView extends View {
                 heightMeasureSpec = heightSpecSize;
                 break;
         }
+        pointY = 2 * mTextHeight;
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
     }
 

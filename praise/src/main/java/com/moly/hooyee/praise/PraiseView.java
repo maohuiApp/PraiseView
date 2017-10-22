@@ -156,11 +156,13 @@ public class PraiseView extends View {
         int factor = -20;
         for (int i = 0; i < 4; i++) {
             int result = base + factor * i;
+            // 点p1为mDrawable外接圆上的点
             PointF p1 = new PointF(
                     mCircleCenter.x + (float) (radius * Math.cos(Math.toRadians(result))),
                     mCircleCenter.y + (float) (radius * Math.sin(Math.toRadians(result)))
             );
 
+            // 点p1为mDrawable外接圆scale倍上的点
             PointF p2 = new PointF(
                     mCircleCenter.x + (float) (scale * radius * Math.cos(Math.toRadians(result))),
                     mCircleCenter.y + (float) (scale * radius * Math.sin(Math.toRadians(result)))
