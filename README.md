@@ -17,7 +17,7 @@ Add the dependency in module build.gradle:
 
 ```gradle
 dependencies {
-  compile 'me.wangyuwei:shoppoing:1.0.5'
+  compile 'com.hooyee.view:praise:1.0.1'
 }
 ```
 
